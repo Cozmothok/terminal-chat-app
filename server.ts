@@ -15,6 +15,22 @@ const io = new Server(server, {
 });
 
 app.use(cors());
+app.use(express.json()); // Add this line to parse JSON request bodies
+
+// Hardcoded user for demonstration (NOT SECURE FOR PRODUCTION)
+const HARDCODED_USERNAME = "user123";
+const HARDCODED_PASSWORD = "pass4321";
+
+// Login endpoint
+app.post('/login', (req, res) => {
+  const { username, password } = req.body;
+
+  if (username === HARDCODED_USERNAME && password === HARDCODED_PASSWORD) {
+    res.json({ success: true, message: "Login successful!" });
+  } else {
+    res.status(401).json({ success: false, message: "Invalid credentials." });
+  }
+});
 
 // Serve the main frontend files from the root directory
 app.use(express.static(path.join(__dirname, '..')) as any);
@@ -52,7 +68,12 @@ let users: User[] = [];
 io.on('connection', (socket) => {
   console.log(`[SERVER] User connected: ${socket.id}`);
 
-  socket.on('join_group', (user: User) => {
+  socket.on('join_group', (user: User, isAuthenticated: boolean) => {
+    if (!isAuthenticated) {
+      console.log(`[SERVER] Unauthorized user ${user.name} attempted to join.`);
+      socket.emit('auth_error', 'Authentication required to join.');
+      return;
+    }
     socket.data.user = user;
     users.push(user);
     console.log(`[SERVER] User ${user.name} joined.`);
@@ -60,14 +81,23 @@ io.on('connection', (socket) => {
     // Notify all clients about the new user list
     io.emit('update_users', users);
 
-    // Send a system message to all clients
-    const systemMessage: Message = {
+    // Send a system message to all clients that a user has entered
+    const joinMessage: Message = {
       id: `sys-${Date.now()}`,
       sender: { name: 'SYSTEM' },
       text: `${user.name} has entered the channel.`,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     };
-    io.emit('new_message', systemMessage);
+    io.emit('new_message', joinMessage);
+
+    // Send a welcome message specifically to the joining user
+    const welcomeMessage: Message = {
+      id: `sys-welcome-${Date.now()}`,
+      sender: { name: 'SYSTEM' },
+      text: `Welcome to the chat, ${user.name}!`, // Personalized welcome
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    };
+    socket.emit('new_message', welcomeMessage); // Send only to the joining user
   });
 
   socket.on('send_message', (message: Omit<Message, 'id' | 'timestamp'>) => {

@@ -8,13 +8,34 @@ const App: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const [socket, setSocket] = useState<Socket | null>(null);
 
-  const handleLogin = (name: string) => {
+  const handleLogin = (name: string, isAuthenticated: boolean) => {
     const newUser = { name };
-    // Connect to server. You might need to change this URL if your server is not on localhost.
     const newSocket = io(import.meta.env.VITE_BACKEND_URL as string);
     setUser(newUser);
     setSocket(newSocket);
+
+    // Emit join_group only if authenticated
+    if (isAuthenticated) {
+      newSocket.emit('join_group', newUser, isAuthenticated);
+    }
   };
+
+  useEffect(() => {
+    if (socket) {
+      const handleAuthError = (message: string) => {
+        console.error('Authentication Error:', message);
+        // Optionally, display this error to the user or redirect to login
+        setUser(null);
+        setSocket(null);
+        alert(message);
+      };
+      socket.on('auth_error', handleAuthError);
+
+      return () => {
+        socket.off('auth_error', handleAuthError);
+      };
+    }
+  }, [socket]);
 
   useEffect(() => {
     // Disconnect socket when the component unmounts
