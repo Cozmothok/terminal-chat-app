@@ -77,7 +77,11 @@ io.on('connection', (socket) => {
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     };
     socket.emit('new_message', welcomeMessage); // Send only to the joining user
-  });
+
+    // Send the current user list to the newly connected socket
+    socket.emit('update_users', users);
+
+  }); // End of socket.on('join_group')
 
   socket.on('send_message', (message: Omit<Message, 'id' | 'timestamp'>) => {
     const fullMessage: Message = {
