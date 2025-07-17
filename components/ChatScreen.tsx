@@ -23,9 +23,6 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ currentUser, socket }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    // Initial setup when socket is ready
-    socket.emit('join_group', currentUser);
-
     const handleNewMessage = (message: Message) => {
       setMessages((prev) => [...prev, message]);
     };
@@ -40,6 +37,13 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ currentUser, socket }) => {
       socket.off('new_message', handleNewMessage);
       socket.off('update_users', handleUpdateUsers);
     };
+  }, [socket]); // Only re-run if socket changes
+
+  useEffect(() => {
+    // Emit join_group only once socket is ready and listeners are set
+    if (socket && currentUser) {
+      socket.emit('join_group', currentUser);
+    }
   }, [socket, currentUser]);
 
   useEffect(() => {
