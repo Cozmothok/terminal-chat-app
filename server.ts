@@ -55,10 +55,11 @@ io.on('connection', (socket) => {
   socket.on('join_group', (user: User) => {
     socket.data.user = user;
     users.push(user);
-    console.log(`[SERVER] User ${user.name} joined.`);
+    console.log(`[SERVER] User ${user.name} joined. Current users: ${users.map(u => u.name).join(', ')}`);
 
     // Notify all clients about the new user list
     io.emit('update_users', users);
+    console.log(`[SERVER] Emitted 'update_users' with: ${users.map(u => u.name).join(', ')}`);
 
     // Send a system message to all clients that a user has entered
     const joinMessage: Message = {
@@ -68,6 +69,7 @@ io.on('connection', (socket) => {
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     };
     io.emit('new_message', joinMessage);
+    console.log(`[SERVER] Emitted 'new_message' (join) for ${user.name}`);
 
     // Send a welcome message specifically to the joining user
     const welcomeMessage: Message = {
@@ -77,9 +79,11 @@ io.on('connection', (socket) => {
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     };
     socket.emit('new_message', welcomeMessage); // Send only to the joining user
+    console.log(`[SERVER] Emitted 'new_message' (welcome) to ${user.name}`);
 
     // Send the current user list to the newly connected socket
     socket.emit('update_users', users);
+    console.log(`[SERVER] Emitted 'update_users' to new user ${user.name} with: ${users.map(u => u.name).join(', ')}`);
 
   }); // End of socket.on('join_group')
 
@@ -97,8 +101,11 @@ io.on('connection', (socket) => {
     console.log(`[SERVER] User disconnected: ${socket.id}`);
     const leavingUser = socket.data.user;
     if (leavingUser) {
+      console.log(`[SERVER] User ${leavingUser.name} is leaving. Users before filter: ${users.map(u => u.name).join(', ')}`);
       users = users.filter((u) => u.name !== leavingUser.name);
+      console.log(`[SERVER] Users after filter: ${users.map(u => u.name).join(', ')}`);
       io.emit('update_users', users);
+      console.log(`[SERVER] Emitted 'update_users' (disconnect) with: ${users.map(u => u.name).join(', ')}`);
 
       const systemMessage: Message = {
         id: `sys-${Date.now()}`,
@@ -107,6 +114,7 @@ io.on('connection', (socket) => {
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       };
       io.emit('new_message', systemMessage);
+      console.log(`[SERVER] Emitted 'new_message' (leave) for ${leavingUser.name}`);
       console.log(`[SERVER] User ${leavingUser.name} left.`);
     }
   });
