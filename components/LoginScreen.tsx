@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 
 interface LoginScreenProps {
-  onLogin: (username: string, isAuthenticated: boolean) => void;
+  onLogin: (success: boolean) => void;
 }
 
 const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
@@ -31,13 +31,15 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
       const data = await response.json();
 
       if (data.success) {
-        onLogin(trimmedName, true); // Pass true for isAuthenticated
+        onLogin(true); // Pass true for success
       } else {
         setError(data.message || 'Login failed.');
+        onLogin(false); // Pass false for failure
       }
     } catch (err) {
       console.error('Login API error:', err);
       setError('Could not connect to login service.');
+      onLogin(false); // Pass false for failure
     }
   };
 
