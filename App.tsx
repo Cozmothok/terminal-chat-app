@@ -11,7 +11,7 @@ const App: React.FC = () => {
   const handleLogin = (name: string) => {
     const newUser = { name };
     // Connect to server. You might need to change this URL if your server is not on localhost.
-    const newSocket = io(process.env.VITE_BACKEND_URL as string);
+    const newSocket = io(import.meta.env.VITE_BACKEND_URL as string);
     setUser(newUser);
     setSocket(newSocket);
   };
