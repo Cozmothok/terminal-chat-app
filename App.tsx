@@ -22,9 +22,10 @@ const App: React.FC = () => {
     setDisplayName(name);
 
     // Emit join_group only if authenticated
-    if (isAuthenticated) {
-      newSocket.emit('join_group', newUser, isAuthenticated);
-    }
+    // This will now be handled in a separate useEffect
+    // if (isAuthenticated) {
+    //   newSocket.emit('join_group', newUser, isAuthenticated);
+    // }
   };
 
   useEffect(() => {
@@ -53,6 +54,13 @@ const App: React.FC = () => {
       }
     };
   }, [socket]);
+
+  // New useEffect to handle joining the group after authentication and socket connection
+  useEffect(() => {
+    if (isAuthenticated && user && socket && socket.connected) {
+      socket.emit('join_group', user, isAuthenticated);
+    }
+  }, [isAuthenticated, user, socket]);
 
   if (!isAuthenticated) {
     return (
