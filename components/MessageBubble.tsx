@@ -76,7 +76,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, currentUser }) =
 
   return (
     <div className={`w-full flex ${containerClasses} my-1 animate-fade-in-up`}>
-      <div className={`p-3 max-w-lg lg:max-w-2xl ${bubbleClasses}`}>
+      <div className={`p-3 max-w-[80%] sm:max-w-md ${bubbleClasses}`}>
         <p className={`font-bold text-xs mb-1 ${senderNameColor}`}>{message.sender.name}</p>
         {message.text && <p className="text-sm break-words whitespace-pre-wrap">{message.text}</p>}
         {message.file && <FileRenderer file={message.file} />}

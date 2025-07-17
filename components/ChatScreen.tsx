@@ -119,7 +119,7 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ currentUser, socket }) => {
   );
 
   return (
-    <div className="flex flex-col h-screen max-h-screen bg-transparent text-green-400">
+    <div className="flex flex-col h-screen max-h-screen bg-transparent text-green-400 overflow-hidden">
       <header className="flex items-center p-4 bg-black/80 border-b border-green-900 shrink-0">
         <div className="w-10 h-10 flex items-center justify-center border-2 border-green-500 mr-4 font-mono text-green-500 text-xl">
           [#]
@@ -168,7 +168,7 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ currentUser, socket }) => {
           </div>
         )}
 
-        <form onSubmit={handleSendMessage} className="flex items-center space-x-3">
+        <form onSubmit={handleSendMessage} className="flex items-end space-x-2 sm:space-x-3">
           <input
             ref={fileInputRef}
             type="file"
@@ -179,7 +179,7 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ currentUser, socket }) => {
           <button
             type="button"
             onClick={handleFileAttachment}
-            className="p-3 bg-gray-900/80 border border-green-700 text-green-300 hover:bg-green-800 disabled:opacity-50 disabled:cursor-wait"
+            className="p-2 sm:p-3 bg-gray-900/80 border border-green-700 text-green-300 hover:bg-green-800 disabled:opacity-50 disabled:cursor-wait"
             aria-label="Attach file"
             disabled={isUploading}
           >
@@ -190,14 +190,14 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ currentUser, socket }) => {
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             placeholder={isUploading ? '[UPLOADING...]' : `[${currentUser.name}, type message...]`}
-            className="flex-1 px-4 py-3 bg-gray-900 border border-green-800 placeholder-green-700 focus:outline-none focus:ring-0 focus:border-green-400 transition-colors disabled:opacity-50"
+            className="flex-1 px-3 py-2 sm:px-4 sm:py-3 bg-gray-900 border border-green-800 placeholder-green-700 focus:outline-none focus:ring-0 focus:border-green-400 transition-colors disabled:opacity-50"
             autoComplete="off"
             disabled={!!fileToSend || isUploading}
           />
           <button
             type="submit"
             disabled={(!newMessage.trim() && !fileToSend) || isUploading}
-            className="p-3 bg-green-900/80 border border-green-700 text-green-300 hover:bg-green-800 disabled:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50 transition-all"
+            className="p-2 sm:p-3 bg-green-900/80 border border-green-700 text-green-300 hover:bg-green-800 disabled:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50 transition-all"
             aria-label="Send Message"
           >
             {isUploading ? (
