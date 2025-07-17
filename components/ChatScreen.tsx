@@ -142,7 +142,7 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ currentUser, socket }) => {
         <div ref={messagesEndRef} />
       </main>
 
-      <footer className="p-4 bg-black/80 border-t border-green-900 shrink-0">
+      <footer className="fixed bottom-0 left-0 right-0 p-4 bg-black/80 border-t border-green-900 shrink-0 z-10">
         {filePreviewUrl && fileToSend && (
           <div className="mb-3 p-2 border border-green-800 bg-gray-900/80 flex items-center justify-between">
             <div className="flex items-center gap-2 overflow-hidden">
