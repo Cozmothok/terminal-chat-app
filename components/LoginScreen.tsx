@@ -39,6 +39,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
             Join Channel
           </button>
         </form>
+        <p className="text-xs text-gray-500 mt-4 text-center">Created by Stelin</p>
       </div>
     </div>
   );
