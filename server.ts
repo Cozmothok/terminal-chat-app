@@ -4,6 +4,7 @@ import { Server } from 'socket.io';
 import path from 'path';
 import multer from 'multer';
 import cors from 'cors';
+import { v4 as uuidv4 } from 'uuid';
 import { User, Message } from './types';
 
 const app = express();
@@ -21,12 +22,17 @@ app.use(express.json()); // Add this line to parse JSON request bodies
 const HARDCODED_USERNAME = "user123";
 const HARDCODED_PASSWORD = "pass4321";
 
+// In-memory store for active tokens (NOT PERSISTENT ACROSS SERVER RESTARTS)
+const activeTokens: Map<string, string> = new Map(); // token -> username
+
 // Login endpoint
 app.post('/login', (req, res) => {
   const { username, password } = req.body;
 
   if (username === HARDCODED_USERNAME && password === HARDCODED_PASSWORD) {
-    res.json({ success: true, message: "Login successful!" });
+    const authToken = uuidv4();
+    activeTokens.set(authToken, username);
+    res.json({ success: true, message: "Login successful!", authToken });
   } else {
     res.status(401).json({ success: false, message: "Invalid credentials." });
   }
@@ -68,13 +74,17 @@ let users: User[] = [];
 io.on('connection', (socket) => {
   console.log(`[SERVER] User connected: ${socket.id}`);
 
-  socket.on('join_group', (user: User, isAuthenticated: boolean) => {
-    if (!isAuthenticated) {
-      console.log(`[SERVER] Unauthorized user ${user.name} attempted to join.`);
-      socket.emit('auth_error', 'Authentication required to join.');
+  socket.on('join_group', (user: User, authToken: string) => {
+    if (!activeTokens.has(authToken) || activeTokens.get(authToken) !== user.name) {
+      console.log(`[SERVER] Unauthorized user ${user.name} attempted to join with token: ${authToken}`);
+      socket.emit('auth_error', 'Authentication failed or token invalid.');
       return;
     }
+
+    // Store token and user data on socket for later use (e.g., disconnect)
+    socket.data.authToken = authToken;
     socket.data.user = user;
+
     users.push(user);
     console.log(`[SERVER] User ${user.name} joined.`);
 
@@ -101,6 +111,12 @@ io.on('connection', (socket) => {
   });
 
   socket.on('send_message', (message: Omit<Message, 'id' | 'timestamp'>) => {
+    // Ensure sender is authenticated (optional, but good practice)
+    if (!socket.data.authToken || activeTokens.get(socket.data.authToken) !== message.sender.name) {
+      console.log(`[SERVER] Unauthorized message attempt from ${message.sender.name}`);
+      socket.emit('auth_error', 'Unauthorized message.');
+      return;
+    }
     const fullMessage: Message = {
       ...message,
       id: `msg-${Date.now()}`,
@@ -113,6 +129,13 @@ io.on('connection', (socket) => {
   socket.on('disconnect', () => {
     console.log(`[SERVER] User disconnected: ${socket.id}`);
     const leavingUser = socket.data.user;
+    const leavingAuthToken = socket.data.authToken;
+
+    if (leavingAuthToken && activeTokens.has(leavingAuthToken)) {
+      activeTokens.delete(leavingAuthToken);
+      console.log(`[SERVER] Token ${leavingAuthToken} removed.`);
+    }
+
     if (leavingUser) {
       users = users.filter((u) => u.name !== leavingUser.name);
       io.emit('update_users', users);
@@ -127,9 +150,4 @@ io.on('connection', (socket) => {
       console.log(`[SERVER] User ${leavingUser.name} left.`);
     }
   });
-});
-
-const PORT = process.env.PORT || 3001;
-server.listen(PORT, () => {
-  console.log(`[SERVER] Listening on *:${PORT}`);
 });

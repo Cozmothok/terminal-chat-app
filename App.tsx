@@ -6,12 +6,16 @@ import { io, Socket } from 'socket.io-client';
 
 const App: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [authToken, setAuthToken] = useState<string | null>(null); // New state for authToken
   const [displayName, setDisplayName] = useState('');
   const [user, setUser] = useState<User | null>(null);
   const [socket, setSocket] = useState<Socket | null>(null);
 
-  const handleHardcodedLogin = (success: boolean) => {
+  const handleHardcodedLogin = (success: boolean, receivedAuthToken?: string) => {
     setIsAuthenticated(success);
+    if (success && receivedAuthToken) {
+      setAuthToken(receivedAuthToken);
+    }
   };
 
   const handleDisplayNameSubmit = (name: string) => {
@@ -20,12 +24,6 @@ const App: React.FC = () => {
     setUser(newUser);
     setSocket(newSocket);
     setDisplayName(name);
-
-    // Emit join_group only if authenticated
-    // This will now be handled in a separate useEffect
-    // if (isAuthenticated) {
-    //   newSocket.emit('join_group', newUser, isAuthenticated);
-    // }
   };
 
   useEffect(() => {
@@ -35,6 +33,7 @@ const App: React.FC = () => {
         setUser(null);
         setSocket(null);
         setIsAuthenticated(false);
+        setAuthToken(null); // Clear token on auth error
         setDisplayName('');
         alert(message);
       };
@@ -57,10 +56,10 @@ const App: React.FC = () => {
 
   // New useEffect to handle joining the group after authentication and socket connection
   useEffect(() => {
-    if (isAuthenticated && user && socket && socket.connected) {
-      socket.emit('join_group', user, isAuthenticated);
+    if (isAuthenticated && user && socket && socket.connected && authToken) {
+      socket.emit('join_group', user, authToken); // Pass authToken
     }
-  }, [isAuthenticated, user, socket]);
+  }, [isAuthenticated, user, socket, authToken]);
 
   if (!isAuthenticated) {
     return (

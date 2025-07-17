@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 
 interface LoginScreenProps {
-  onLogin: (success: boolean) => void;
+  onLogin: (success: boolean, authToken?: string) => void;
 }
 
 const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
@@ -31,7 +31,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
       const data = await response.json();
 
       if (data.success) {
-        onLogin(true); // Pass true for success
+        onLogin(true, data.authToken); // Pass true for success and the authToken
       } else {
         setError(data.message || 'Login failed.');
         onLogin(false); // Pass false for failure
