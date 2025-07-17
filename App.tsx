@@ -5,45 +5,16 @@ import ChatScreen from './components/ChatScreen';
 import { io, Socket } from 'socket.io-client';
 
 const App: React.FC = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [authToken, setAuthToken] = useState<string | null>(null); // New state for authToken
-  const [displayName, setDisplayName] = useState('');
   const [user, setUser] = useState<User | null>(null);
   const [socket, setSocket] = useState<Socket | null>(null);
 
-  const handleHardcodedLogin = (success: boolean, receivedAuthToken?: string) => {
-    setIsAuthenticated(success);
-    if (success && receivedAuthToken) {
-      setAuthToken(receivedAuthToken);
-    }
-  };
-
-  const handleDisplayNameSubmit = (name: string) => {
+  const handleLogin = (name: string) => {
     const newUser = { name };
     const newSocket = io(import.meta.env.VITE_BACKEND_URL as string);
     setUser(newUser);
     setSocket(newSocket);
-    setDisplayName(name);
+    newSocket.emit('join_group', newUser);
   };
-
-  useEffect(() => {
-    if (socket) {
-      const handleAuthError = (message: string) => {
-        console.error('Authentication Error:', message);
-        setUser(null);
-        setSocket(null);
-        setIsAuthenticated(false);
-        setAuthToken(null); // Clear token on auth error
-        setDisplayName('');
-        alert(message);
-      };
-      socket.on('auth_error', handleAuthError);
-
-      return () => {
-        socket.off('auth_error', handleAuthError);
-      };
-    }
-  }, [socket]);
 
   useEffect(() => {
     // Disconnect socket when the component unmounts
@@ -54,50 +25,13 @@ const App: React.FC = () => {
     };
   }, [socket]);
 
-  // New useEffect to handle joining the group after authentication and socket connection
-  useEffect(() => {
-    if (isAuthenticated && user && socket && socket.connected && authToken) {
-      socket.emit('join_group', user, authToken); // Pass authToken
-    }
-  }, [isAuthenticated, user, socket, authToken]);
-
-  if (!isAuthenticated) {
-    return (
-      <div className="scanlines relative h-screen w-screen font-mono antialiased overflow-hidden">
-        <LoginScreen onLogin={handleHardcodedLogin} />
-      </div>
-    );
-  }
-
-  if (!displayName) {
-    return (
-      <div className="scanlines relative h-screen w-screen font-mono antialiased overflow-hidden flex items-center justify-center">
-        <div className="w-full max-w-sm p-6 border border-green-700/50 bg-black/50 backdrop-blur-sm">
-          <h1 className="text-3xl font-bold text-green-400 mb-2 terminal-glow">Enter Display Name</h1>
-          <p className="text-gray-400 mb-6">Choose a name for the chat.</p>
-          <form onSubmit={(e) => { e.preventDefault(); handleDisplayNameSubmit(e.currentTarget.displayName.value); }}>
-            <input
-              type="text"
-              name="displayName"
-              placeholder="[Your Chat Name]"
-              className="w-full px-4 py-3 mb-4 bg-gray-900/80 border border-green-800 text-green-400 placeholder-green-700 focus:outline-none focus:ring-0 focus:border-green-400 transition-colors"
-              autoFocus
-            />
-            <button
-              type="submit"
-              className="w-full px-4 py-3 bg-green-900/80 text-green-300 font-bold border border-green-700 hover:bg-green-800 hover:text-white disabled:bg-gray-800 disabled:text-gray-500 disabled:border-gray-700 disabled:cursor-not-allowed transition-all"
-            >
-              Join Chat
-            </button>
-          </form>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="scanlines relative h-screen w-screen font-mono antialiased overflow-hidden">
-      <ChatScreen currentUser={user!} socket={socket!} />
+      {!user || !socket ? (
+        <LoginScreen onLogin={handleLogin} />
+      ) : (
+        <ChatScreen currentUser={user} socket={socket} />
+      )}
     </div>
   );
 };
