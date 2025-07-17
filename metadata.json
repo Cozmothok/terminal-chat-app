@@ -1,0 +1,5 @@
+{
+  "name": "Terminal Chat",
+  "description": "A private, server-powered group chat application with a hacker terminal theme. Supports real-time text messaging and file sharing between multiple users.",
+  "requestFramePermissions": []
+}
