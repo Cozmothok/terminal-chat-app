@@ -72,7 +72,10 @@ io.on('connection', (socket) => {
       return; // Stop further processing
     }
 
-    const newUserWithSocketId = { ...user, socketId: socket.id };
+    const newUserWithSocketId: User = { ...user, socketId: socket.id };
+    if (newUserWithSocketId.name.toLowerCase() === 'admin215') {
+      newUserWithSocketId.displayName = 'Admin';
+    }
 
     if (existingUser) {
       // User reconnected, update their socketId
@@ -85,22 +88,22 @@ io.on('connection', (socket) => {
       console.log(`[SERVER] User ${user.name} joined. Current users: ${users.map(u => u.name).join(', ')}`);
 
       // Send a system message to all clients that a user has entered
-      io.emit('new_message', createSystemMessage(`${user.name} has entered the channel.`));
+      io.emit('new_message', createSystemMessage(`${newUserWithSocketId.displayName || newUserWithSocketId.name} has entered the channel.`));
       console.log(`[SERVER] Emitted 'new_message' (join) for ${user.name}`);
     }
 
     socket.data.user = newUserWithSocketId;
 
     // Notify all clients about the new user list
-    io.emit('update_users', users);
+    io.emit('update_users', users.map(u => ({ ...u, name: u.displayName || u.name })));
     console.log(`[SERVER] Emitted 'update_users' with: ${users.map(u => u.name).join(', ')}`);
 
     // Send a welcome message specifically to the joining user
-    socket.emit('new_message', createSystemMessage(`Welcome to the chat, ${user.name}!`)); // Send only to the joining user
+    socket.emit('new_message', createSystemMessage(`Welcome to the chat, ${newUserWithSocketId.displayName || newUserWithSocketId.name}!`)); // Send only to the joining user
     console.log(`[SERVER] Emitted 'new_message' (welcome) to ${user.name}`);
 
     // Send the current user list to the newly connected socket
-    socket.emit('update_users', users);
+    socket.emit('update_users', users.map(u => ({ ...u, name: u.displayName || u.name })));
     console.log(`[SERVER] Emitted 'update_users' to new user ${user.name} with: ${users.map(u => u.name).join(', ')}`);
 
   }); // End of socket.on('join_group')
@@ -140,16 +143,16 @@ io.on('connection', (socket) => {
   });
 
   socket.on('kick_user_request', (targetSocketId: string) => {
-    const godmodeUserName = 'godmode215';
+    const godmodeUserName = 'admin215';
     if (socket.data.user && socket.data.user.name.toLowerCase() === godmodeUserName.toLowerCase()) {
       const targetSocket = io.sockets.sockets.get(targetSocketId);
       if (targetSocket && targetSocket.data.user) {
-        const kickedUserName = targetSocket.data.user.name;
+        const kickedUserName = targetSocket.data.user.displayName || targetSocket.data.user.name;
         targetSocket.disconnect(true); // Disconnect the target user
         
         // Remove the kicked user from the users array
         users = users.filter(u => u.socketId !== targetSocketId);
-        io.emit('update_users', users); // Update user list for all clients
+        io.emit('update_users', users.map(u => ({ ...u, name: u.displayName || u.name }))); // Update user list for all clients
 
         io.emit('new_message', createSystemMessage(`${kickedUserName} has been kicked from the channel by ${godmodeUserName}.`));
         console.log(`[SERVER] User ${kickedUserName} (socket: ${targetSocketId}) has been kicked by ${godmodeUserName}.`);
@@ -170,10 +173,10 @@ io.on('connection', (socket) => {
       console.log(`[SERVER] User ${leavingUser.name} is leaving. Users before filter: ${users.map(u => u.name).join(', ')}`);
       users = users.filter((u) => u.socketId !== socket.id);
       console.log(`[SERVER] Users after filter: ${users.map(u => u.name).join(', ')}`);
-      io.emit('update_users', users);
+      io.emit('update_users', users.map(u => ({ ...u, name: u.displayName || u.name })));
       console.log(`[SERVER] Emitted 'update_users' (disconnect) with: ${users.map(u => u.name).join(', ')}`);
 
-      io.emit('new_message', createSystemMessage(`${leavingUser.name} has left the channel.`));
+      io.emit('new_message', createSystemMessage(`${leavingUser.displayName || leavingUser.name} has left the channel.`));
       console.log(`[SERVER] Emitted 'new_message' (leave) for ${leavingUser.name}`);
       console.log(`[SERVER] User ${leavingUser.name} left.`);
     }
