@@ -39,12 +39,7 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ currentUser, socket }) => {
     };
   }, [socket]); // Only re-run if socket changes
 
-  useEffect(() => {
-    // Emit join_group only once socket is ready and listeners are set
-    if (socket && currentUser) {
-      socket.emit('join_group', currentUser);
-    }
-  }, [socket, currentUser]);
+  
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
