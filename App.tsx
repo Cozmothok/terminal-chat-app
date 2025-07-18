@@ -9,11 +9,17 @@ const App: React.FC = () => {
   const [socket, setSocket] = useState<Socket | null>(null);
 
   const handleLogin = (name: string) => {
-    const newUser = { name };
     const newSocket = io(import.meta.env.VITE_BACKEND_URL as string);
-    setUser(newUser);
     setSocket(newSocket);
-    newSocket.emit('join_group', newUser);
+
+    // Temporarily set user with just name, socketId will be added by server
+    const initialUser: User = { name, socketId: newSocket.id }; 
+    if (initialUser.name.toLowerCase() === 'admin215') {
+      initialUser.displayName = 'Admin';
+    }
+    setUser(initialUser); // Set user immediately for rendering ChatScreen
+
+    newSocket.emit('join_group', initialUser);
   };
 
   useEffect(() => {
@@ -30,7 +36,7 @@ const App: React.FC = () => {
       {!user || !socket ? (
         <LoginScreen onLogin={handleLogin} socket={socket} onSocketError={() => setSocket(null)} />
       ) : (
-        <ChatScreen currentUser={user} socket={socket} isGodmode={user.name.toLowerCase() === 'godmode215'} />
+        <ChatScreen currentUser={user} socket={socket} isGodmode={user.name.toLowerCase() === 'admin215'} />
       )}
     </div>
   );
