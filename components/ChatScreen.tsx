@@ -18,6 +18,7 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ currentUser, socket }) => {
   const [fileToSend, setFileToSend] = useState<File | null>(null);
   const [filePreviewUrl, setFilePreviewUrl] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [showUsersDropdown, setShowUsersDropdown] = useState(false); // New state for dropdown
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -125,12 +126,23 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ currentUser, socket }) => {
         </div>
         <div>
           <h1 className="text-xl font-bold text-green-400 terminal-glow">Group Chat</h1>
-          <p
-            className="text-sm text-green-500 truncate"
-            title={users.map((u) => u.name).join(', ')}
-          >
-            {users.length} users online: {users.map((u) => u.name).join(', ')}
-          </p>
+          <div className="relative">
+            <button
+              onClick={() => setShowUsersDropdown(!showUsersDropdown)}
+              className="text-sm text-green-500 hover:underline focus:outline-none"
+            >
+              {users.length} users online
+            </button>
+            {showUsersDropdown && (
+              <div className="absolute left-0 mt-2 w-48 bg-black/90 border border-green-700 z-10 max-h-60 overflow-y-auto">
+                {users.map((user) => (
+                  <div key={user.socketId} className="px-4 py-2 text-green-400 hover:bg-green-900/50">
+                    {user.name}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </header>
 
