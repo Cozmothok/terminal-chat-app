@@ -10,7 +10,7 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: '*',
+    origin: 'https://terminal-chat-frontend.onrender.com',
   },
 });
 
@@ -49,6 +49,13 @@ app.post('/upload', upload.single('file'), (req: any, res: Response) => {
 
 let users: User[] = [];
 
+const createSystemMessage = (text: string): Message => ({
+  id: `sys-${Date.now()}`,
+  sender: { name: 'SYSTEM' },
+  text,
+  timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+});
+
 io.on('connection', (socket) => {
   console.log(`[SERVER] User connected: ${socket.id}`);
 
@@ -62,23 +69,11 @@ io.on('connection', (socket) => {
     console.log(`[SERVER] Emitted 'update_users' with: ${users.map(u => u.name).join(', ')}`);
 
     // Send a system message to all clients that a user has entered
-    const joinMessage: Message = {
-      id: `sys-${Date.now()}`,
-      sender: { name: 'SYSTEM' },
-      text: `${user.name} has entered the channel.`,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-    };
-    io.emit('new_message', joinMessage);
+    io.emit('new_message', createSystemMessage(`${user.name} has entered the channel.`));
     console.log(`[SERVER] Emitted 'new_message' (join) for ${user.name}`);
 
     // Send a welcome message specifically to the joining user
-    const welcomeMessage: Message = {
-      id: `sys-welcome-${Date.now()}`,
-      sender: { name: 'SYSTEM' },
-      text: `Welcome to the chat, ${user.name}!`, // Personalized welcome
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-    };
-    socket.emit('new_message', welcomeMessage); // Send only to the joining user
+    socket.emit('new_message', createSystemMessage(`Welcome to the chat, ${user.name}!`)); // Send only to the joining user
     console.log(`[SERVER] Emitted 'new_message' (welcome) to ${user.name}`);
 
     // Send the current user list to the newly connected socket
@@ -107,13 +102,7 @@ io.on('connection', (socket) => {
       io.emit('update_users', users);
       console.log(`[SERVER] Emitted 'update_users' (disconnect) with: ${users.map(u => u.name).join(', ')}`);
 
-      const systemMessage: Message = {
-        id: `sys-${Date.now()}`,
-        sender: { name: 'SYSTEM' },
-        text: `${leavingUser.name} has left the channel.`,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      };
-      io.emit('new_message', systemMessage);
+      io.emit('new_message', createSystemMessage(`${leavingUser.name} has left the channel.`));
       console.log(`[SERVER] Emitted 'new_message' (leave) for ${leavingUser.name}`);
       console.log(`[SERVER] User ${leavingUser.name} left.`);
     }
