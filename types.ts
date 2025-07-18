@@ -3,6 +3,10 @@ export interface User {
   socketId: string;
 }
 
+export interface SystemSender {
+  name: string;
+}
+
 export interface FileAttachment {
   name: string;
   type: string;
@@ -12,7 +16,7 @@ export interface FileAttachment {
 
 export interface Message {
   id: string;
-  sender: User;
+  sender: User | SystemSender;
   timestamp: string;
   text?: string;
   file?: FileAttachment;

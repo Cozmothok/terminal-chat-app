@@ -4,7 +4,7 @@ import { Server } from 'socket.io';
 import path from 'path';
 import multer from 'multer';
 import cors from 'cors';
-import { User, Message } from './types';
+import { User, Message, SystemSender } from './types';
 
 const app = express();
 const server = http.createServer(app);
@@ -51,7 +51,7 @@ let users: User[] = [];
 
 const createSystemMessage = (text: string): Message => ({
   id: `sys-${Date.now()}`,
-  sender: { name: 'SYSTEM' },
+  sender: { name: 'SYSTEM' } as SystemSender,
   text,
   timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
 });
