@@ -20,4 +20,6 @@ export interface Message {
   timestamp: string;
   text?: string;
   file?: FileAttachment;
+  recipient?: User; // Optional recipient for private messages
+  messageType: 'public' | 'private'; // Type of message
 }

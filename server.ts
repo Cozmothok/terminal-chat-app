@@ -53,7 +53,7 @@ const createSystemMessage = (text: string): Message => ({
   id: `sys-${Date.now()}`,
   sender: { name: 'SYSTEM' } as SystemSender,
   text,
-  timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+  timestamp: new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true, timeZone: 'Asia/Kolkata' }),
 });
 
 io.on('connection', (socket) => {
@@ -104,14 +104,38 @@ io.on('connection', (socket) => {
 
   }); // End of socket.on('join_group')
 
-  socket.on('send_message', (message: Omit<Message, 'id' | 'timestamp'>) => {
+  socket.on('send_message', (message: Omit<Message, 'id' | 'timestamp' | 'messageType'>) => {
     const fullMessage: Message = {
       ...message,
       id: `msg-${Date.now()}`,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      timestamp: new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true, timeZone: 'Asia/Kolkata' }),
+      messageType: 'public',
     };
-    console.log(`[SERVER] Message from ${fullMessage.sender.name}`);
+    console.log(`[SERVER] Public message from ${fullMessage.sender.name}`);
     io.emit('new_message', fullMessage);
+  });
+
+  socket.on('send_private_message', (message: Omit<Message, 'id' | 'timestamp' | 'messageType'> & { recipient: User }) => {
+    const fullMessage: Message = {
+      ...message,
+      id: `msg-${Date.now()}`,
+      timestamp: new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true, timeZone: 'Asia/Kolkata' }),
+      messageType: 'private',
+    };
+
+    const recipientSocket = io.sockets.sockets.get(fullMessage.recipient!.socketId);
+
+    if (recipientSocket) {
+      // Send to recipient
+      recipientSocket.emit('new_message', fullMessage);
+      console.log(`[SERVER] Private message from ${fullMessage.sender.name} to ${fullMessage.recipient!.name}`);
+
+      // Send to sender (so they see their own private message)
+      socket.emit('new_message', fullMessage);
+    } else {
+      console.log(`[SERVER] Private message to ${fullMessage.recipient!.name} failed: recipient not found.`);
+      socket.emit('new_message', createSystemMessage(`Private message to ${fullMessage.recipient!.name} failed: user is offline.`));
+    }
   });
 
   socket.on('disconnect', () => {
