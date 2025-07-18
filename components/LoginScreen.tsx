@@ -25,7 +25,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, socket }) => {
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     const trimmedName = name.trim();
-    if (trimmedName) {
+    if (trimmedName && !errorMessage) {
       setErrorMessage(''); // Clear previous errors
       onLogin(trimmedName);
     }
