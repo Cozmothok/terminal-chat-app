@@ -28,7 +28,7 @@ const App: React.FC = () => {
   return (
     <div className="scanlines relative h-screen w-screen font-mono antialiased overflow-hidden">
       {!user || !socket ? (
-        <LoginScreen onLogin={handleLogin} />
+        <LoginScreen onLogin={handleLogin} socket={socket} />
       ) : (
         <ChatScreen currentUser={user} socket={socket} />
       )}

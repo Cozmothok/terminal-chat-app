@@ -1,17 +1,32 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { Socket } from 'socket.io-client';
 
 interface LoginScreenProps {
-  // eslint-disable-next-line no-unused-vars
   onLogin: (username: string) => void;
+  socket: Socket | null;
 }
 
-const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
+const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, socket }) => {
   const [name, setName] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
+
+  useEffect(() => {
+    if (socket) {
+      socket.on('name_taken', (message: string) => {
+        setErrorMessage(message);
+      });
+
+      return () => {
+        socket.off('name_taken');
+      };
+    }
+  }, [socket]);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     const trimmedName = name.trim();
     if (trimmedName) {
+      setErrorMessage(''); // Clear previous errors
       onLogin(trimmedName);
     }
   };
@@ -31,6 +46,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
             className="w-full px-4 py-3 mb-4 bg-gray-900/80 border border-green-800 text-green-400 placeholder-green-700 focus:outline-none focus:ring-0 focus:border-green-400 transition-colors"
             autoFocus
           />
+          {errorMessage && <p className="text-red-500 text-sm mb-4">{errorMessage}</p>}
           <button
             type="submit"
             disabled={!name.trim()}

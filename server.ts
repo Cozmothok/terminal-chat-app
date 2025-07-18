@@ -60,11 +60,21 @@ io.on('connection', (socket) => {
   console.log(`[SERVER] User connected: ${socket.id}`);
 
   socket.on('join_group', (user: User) => {
-    const existingUserIndex = users.findIndex(u => u.name === user.name);
+    const normalizedNewUserName = user.name.toLowerCase();
+    const existingUser = users.find(u => u.name.toLowerCase() === normalizedNewUserName);
+
+    if (existingUser && existingUser.socketId !== socket.id) {
+      // Name is already taken by another active user
+      socket.emit('name_taken', `The username '${user.name}' is already taken. Please choose a different one.`);
+      console.log(`[SERVER] Username '${user.name}' is taken. Rejecting connection for socket ${socket.id}`);
+      return; // Stop further processing
+    }
+
     const newUserWithSocketId = { ...user, socketId: socket.id };
 
-    if (existingUserIndex !== -1) {
-      // User already exists, update their socketId
+    if (existingUser) {
+      // User reconnected, update their socketId
+      const existingUserIndex = users.findIndex(u => u.name.toLowerCase() === normalizedNewUserName);
       users[existingUserIndex] = newUserWithSocketId;
       console.log(`[SERVER] User ${user.name} reconnected. Updated socketId. Current users: ${users.map(u => u.name).join(', ')}`);
     } else {
