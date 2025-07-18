@@ -157,7 +157,7 @@ io.on('connection', (socket) => {
         users = users.filter(u => u.socketId !== targetSocketId);
         io.emit('update_users', users.map(u => ({ ...u, name: u.displayName || u.name }))); // Update user list for all clients
 
-        io.emit('new_message', createSystemMessage(`${kickedUserName} has been kicked from the channel by ${godmodeUserName}.`));
+        io.emit('new_message', createSystemMessage(`${kickedUserName} has been kicked from the channel by ${socket.data.user.displayName || godmodeUserName}.`));
         console.log(`[SERVER] User ${kickedUserName} (socket: ${targetSocketId}) has been kicked by ${godmodeUserName}.`);
       } else {
         console.log(`[SERVER] Kick request failed: Target socket ${targetSocketId} not found or user data missing.`);
