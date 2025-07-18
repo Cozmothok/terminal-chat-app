@@ -1,5 +1,6 @@
 export interface User {
   name: string;
+  socketId: string;
 }
 
 export interface FileAttachment {

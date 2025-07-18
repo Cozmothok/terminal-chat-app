@@ -60,17 +60,28 @@ io.on('connection', (socket) => {
   console.log(`[SERVER] User connected: ${socket.id}`);
 
   socket.on('join_group', (user: User) => {
-    socket.data.user = user;
-    users.push(user);
-    console.log(`[SERVER] User ${user.name} joined. Current users: ${users.map(u => u.name).join(', ')}`);
+    const existingUserIndex = users.findIndex(u => u.name === user.name);
+    const newUserWithSocketId = { ...user, socketId: socket.id };
+
+    if (existingUserIndex !== -1) {
+      // User already exists, update their socketId
+      users[existingUserIndex] = newUserWithSocketId;
+      console.log(`[SERVER] User ${user.name} reconnected. Updated socketId. Current users: ${users.map(u => u.name).join(', ')}`);
+    } else {
+      // New user
+      users.push(newUserWithSocketId);
+      console.log(`[SERVER] User ${user.name} joined. Current users: ${users.map(u => u.name).join(', ')}`);
+
+      // Send a system message to all clients that a user has entered
+      io.emit('new_message', createSystemMessage(`${user.name} has entered the channel.`));
+      console.log(`[SERVER] Emitted 'new_message' (join) for ${user.name}`);
+    }
+
+    socket.data.user = newUserWithSocketId;
 
     // Notify all clients about the new user list
     io.emit('update_users', users);
     console.log(`[SERVER] Emitted 'update_users' with: ${users.map(u => u.name).join(', ')}`);
-
-    // Send a system message to all clients that a user has entered
-    io.emit('new_message', createSystemMessage(`${user.name} has entered the channel.`));
-    console.log(`[SERVER] Emitted 'new_message' (join) for ${user.name}`);
 
     // Send a welcome message specifically to the joining user
     socket.emit('new_message', createSystemMessage(`Welcome to the chat, ${user.name}!`)); // Send only to the joining user
@@ -97,7 +108,7 @@ io.on('connection', (socket) => {
     const leavingUser = socket.data.user;
     if (leavingUser) {
       console.log(`[SERVER] User ${leavingUser.name} is leaving. Users before filter: ${users.map(u => u.name).join(', ')}`);
-      users = users.filter((u) => u.name !== leavingUser.name);
+      users = users.filter((u) => u.socketId !== socket.id);
       console.log(`[SERVER] Users after filter: ${users.map(u => u.name).join(', ')}`);
       io.emit('update_users', users);
       console.log(`[SERVER] Emitted 'update_users' (disconnect) with: ${users.map(u => u.name).join(', ')}`);
