@@ -4,9 +4,10 @@ import { Socket } from 'socket.io-client';
 interface LoginScreenProps {
   onLogin: (username: string) => void;
   socket: Socket | null;
+  onSocketError: () => void;
 }
 
-const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, socket }) => {
+const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, socket, onSocketError }) => {
   const [name, setName] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -14,13 +15,14 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, socket }) => {
     if (socket) {
       socket.on('name_taken', (message: string) => {
         setErrorMessage(message);
+        onSocketError(); // Signal App.tsx to clear the socket
       });
 
       return () => {
         socket.off('name_taken');
       };
     }
-  }, [socket]);
+  }, [socket, onSocketError]);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
