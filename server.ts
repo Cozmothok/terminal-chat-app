@@ -54,6 +54,7 @@ const createSystemMessage = (text: string): Message => ({
   sender: { name: 'SYSTEM' } as SystemSender,
   text,
   timestamp: new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true, timeZone: 'Asia/Kolkata' }),
+  messageType: 'public',
 });
 
 io.on('connection', (socket) => {
