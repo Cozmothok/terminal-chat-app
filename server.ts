@@ -59,7 +59,9 @@ const createSystemMessage = (text: string): Message => ({
 
 io.on('connection', (socket) => {
   console.log(`[SERVER] User connected: ${socket.id}`);
-  const userIpAddress = socket.handshake.headers['x-forwarded-for'] || socket.handshake.address; // Capture IP address
+  const userIpAddress = Array.isArray(socket.handshake.headers['x-forwarded-for']) 
+    ? socket.handshake.headers['x-forwarded-for'][0] 
+    : socket.handshake.headers['x-forwarded-for'] || socket.handshake.address; // Capture IP address
 
   socket.on('join_group', (user: User) => {
     const normalizedNewUserName = user.name.toLowerCase();
