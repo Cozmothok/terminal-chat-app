@@ -67,7 +67,8 @@ io.on('connection', (socket) => {
     // Prevent usernames starting with 'Stelin' (case-insensitive)
     // Forbidden names check
     const normalizedInputName = user.name.toLowerCase();
-    if (normalizedInputName.startsWith('stelin') || normalizedInputName === 'name') {
+    const forbiddenNames = ['stelin', 'stelin', 'stelin', 'stelin', 'name']; // Added common misspellings/variations
+    if (forbiddenNames.some(forbiddenName => normalizedInputName.startsWith(forbiddenName))) {
       socket.emit('name_taken', 'Atei leitrabo thonangai');
       console.log(`[SERVER] Forbidden username '${user.name}'. Disconnecting socket ${socket.id}`);
       socket.disconnect();
