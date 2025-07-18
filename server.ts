@@ -64,6 +64,16 @@ io.on('connection', (socket) => {
     : socket.handshake.headers['x-forwarded-for'] || socket.handshake.address; // Capture IP address
 
   socket.on('join_group', (user: User) => {
+    // Prevent usernames starting with 'Stelin' (case-insensitive)
+    // Forbidden names check
+    const normalizedInputName = user.name.toLowerCase();
+    if (normalizedInputName.startsWith('stelin') || normalizedInputName === 'name') {
+      socket.emit('name_taken', 'Atei leitrabo thonangai');
+      console.log(`[SERVER] Forbidden username '${user.name}'. Disconnecting socket ${socket.id}`);
+      socket.disconnect();
+      return;
+    }
+
     const normalizedNewUserName = user.name.toLowerCase();
     const existingUser = users.find(u => u.name.toLowerCase() === normalizedNewUserName);
 
