@@ -59,12 +59,13 @@ const createSystemMessage = (text: string): Message => ({
 
 io.on('connection', (socket) => {
   console.log(`[SERVER] User connected: ${socket.id}`);
+  const userIpAddress = socket.handshake.address; // Capture IP address
 
   socket.on('join_group', (user: User) => {
     const normalizedNewUserName = user.name.toLowerCase();
     const existingUser = users.find(u => u.name.toLowerCase() === normalizedNewUserName);
 
-    const newUserWithSocketId: User = { ...user, socketId: socket.id };
+    const newUserWithSocketId: User = { ...user, socketId: socket.id, ipAddress: userIpAddress };
     if (newUserWithSocketId.name.toLowerCase() === 'admin215') {
       newUserWithSocketId.displayName = 'Admin';
     }
@@ -179,6 +180,21 @@ io.on('connection', (socket) => {
       io.emit('new_message', createSystemMessage(`${leavingUser.displayName || leavingUser.name} has left the channel.`));
       console.log(`[SERVER] Emitted 'new_message' (leave) for ${leavingUser.name}`);
       console.log(`[SERVER] User ${leavingUser.name} left.`);
+    }
+  });
+
+  socket.on('get_user_ips_request', () => {
+    const adminUserName = 'admin215';
+    if (socket.data.user && socket.data.user.name.toLowerCase() === adminUserName.toLowerCase()) {
+      const userIpList = users.map(u => ({
+        name: u.displayName || u.name,
+        ipAddress: u.ipAddress || 'N/A',
+      }));
+      socket.emit('user_ips_list', userIpList);
+      console.log(`[SERVER] Admin ${socket.data.user.name} requested user IP list.`);
+    } else {
+      console.log(`[SERVER] Unauthorized IP request by ${socket.data.user ? socket.data.user.name : 'unknown user'}.`);
+      socket.emit('new_message', createSystemMessage(`Unauthorized: You do not have permission to view IP addresses.`));
     }
   });
 });

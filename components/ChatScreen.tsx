@@ -20,6 +20,8 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ currentUser, socket, isGodmode 
   const [filePreviewUrl, setFilePreviewUrl] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [showUsersDropdown, setShowUsersDropdown] = useState(false); // New state for dropdown
+  const [showIpList, setShowIpList] = useState(false); // New state for IP list modal
+  const [userIpData, setUserIpData] = useState<{ name: string; ipAddress: string; }[]>([]); // New state for IP data
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -31,13 +33,19 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ currentUser, socket, isGodmode 
     const handleUpdateUsers = (userList: User[]) => {
       setUsers(userList);
     };
+    const handleUserIpsList = (ipList: { name: string; ipAddress: string; }[]) => {
+      setUserIpData(ipList);
+      setShowIpList(true);
+    };
 
     socket.on('new_message', handleNewMessage);
     socket.on('update_users', handleUpdateUsers);
+    socket.on('user_ips_list', handleUserIpsList);
 
     return () => {
       socket.off('new_message', handleNewMessage);
       socket.off('update_users', handleUpdateUsers);
+      socket.off('user_ips_list', handleUserIpsList);
     };
   }, [socket]); // Only re-run if socket changes
 
@@ -155,8 +163,37 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ currentUser, socket, isGodmode 
               </div>
             )}
           </div>
+          {isGodmode && (
+            <button
+              onClick={() => socket.emit('get_user_ips_request')}
+              className="ml-4 px-3 py-1 bg-blue-700 text-white text-sm rounded hover:bg-blue-600"
+            >
+              Show User IPs
+            </button>
+          )}
         </div>
       </header>
+
+      {showIpList && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+          <div className="bg-gray-900 border border-green-700 p-6 rounded-lg w-96 max-h-[80vh] overflow-y-auto">
+            <h2 className="text-xl font-bold text-green-400 mb-4">User IP Addresses</h2>
+            <ul className="space-y-2">
+              {userIpData.map((data, index) => (
+                <li key={index} className="text-green-300">
+                  <strong>{data.name}:</strong> {data.ipAddress}
+                </li>
+              ))}
+            </ul>
+            <button
+              onClick={() => setShowIpList(false)}
+              className="mt-6 px-4 py-2 bg-green-700 text-white rounded hover:bg-green-600"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
 
       <main className="flex-1 overflow-y-auto p-4 space-y-2">
         {messages.map((msg) => (

@@ -2,6 +2,7 @@ export interface User {
   name: string;
   socketId: string;
   displayName?: string;
+  ipAddress?: string; // New optional IP address field
 }
 
 export interface SystemSender {
