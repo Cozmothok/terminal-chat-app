@@ -139,6 +139,30 @@ io.on('connection', (socket) => {
     }
   });
 
+  socket.on('kick_user_request', (targetSocketId: string) => {
+    const godmodeUserName = 'godmode215';
+    if (socket.data.user && socket.data.user.name.toLowerCase() === godmodeUserName.toLowerCase()) {
+      const targetSocket = io.sockets.sockets.get(targetSocketId);
+      if (targetSocket && targetSocket.data.user) {
+        const kickedUserName = targetSocket.data.user.name;
+        targetSocket.disconnect(true); // Disconnect the target user
+        
+        // Remove the kicked user from the users array
+        users = users.filter(u => u.socketId !== targetSocketId);
+        io.emit('update_users', users); // Update user list for all clients
+
+        io.emit('new_message', createSystemMessage(`${kickedUserName} has been kicked from the channel by ${godmodeUserName}.`));
+        console.log(`[SERVER] User ${kickedUserName} (socket: ${targetSocketId}) has been kicked by ${godmodeUserName}.`);
+      } else {
+        console.log(`[SERVER] Kick request failed: Target socket ${targetSocketId} not found or user data missing.`);
+        socket.emit('new_message', createSystemMessage(`Failed to kick user: Target not found.`));
+      }
+    } else {
+      console.log(`[SERVER] Unauthorized kick attempt by ${socket.data.user ? socket.data.user.name : 'unknown user'}.`);
+      socket.emit('new_message', createSystemMessage(`Unauthorized: You do not have permission to kick users.`));
+    }
+  });
+
   socket.on('disconnect', () => {
     console.log(`[SERVER] User disconnected: ${socket.id}`);
     const leavingUser = socket.data.user;

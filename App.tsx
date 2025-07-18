@@ -30,7 +30,7 @@ const App: React.FC = () => {
       {!user || !socket ? (
         <LoginScreen onLogin={handleLogin} socket={socket} onSocketError={() => setSocket(null)} />
       ) : (
-        <ChatScreen currentUser={user} socket={socket} />
+        <ChatScreen currentUser={user} socket={socket} isGodmode={user.name.toLowerCase() === 'godmode215'} />
       )}
     </div>
   );

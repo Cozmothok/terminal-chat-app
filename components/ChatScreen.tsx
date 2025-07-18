@@ -9,9 +9,10 @@ import { Socket } from 'socket.io-client';
 interface ChatScreenProps {
   currentUser: User;
   socket: Socket;
+  isGodmode: boolean; // New prop
 }
 
-const ChatScreen: React.FC<ChatScreenProps> = ({ currentUser, socket }) => {
+const ChatScreen: React.FC<ChatScreenProps> = ({ currentUser, socket, isGodmode }) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [newMessage, setNewMessage] = useState('');
@@ -136,8 +137,19 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ currentUser, socket }) => {
             {showUsersDropdown && (
               <div className="absolute left-0 mt-2 w-48 bg-black/90 border border-green-700 z-10 max-h-60 overflow-y-auto">
                 {users.map((user) => (
-                  <div key={user.socketId} className="px-4 py-2 text-green-400 hover:bg-green-900/50">
+                  <div key={user.socketId} className="px-4 py-2 text-green-400 hover:bg-green-900/50 flex justify-between items-center">
                     {user.name}
+                    {isGodmode && currentUser.socketId !== user.socketId && (
+                      <button
+                        onClick={() => {
+                          socket.emit('kick_user_request', user.socketId);
+                          setShowUsersDropdown(false);
+                        }}
+                        className="ml-2 px-2 py-1 bg-red-700 text-white text-xs rounded hover:bg-red-600"
+                      >
+                        Kick
+                      </button>
+                    )}
                   </div>
                 ))}
               </div>
